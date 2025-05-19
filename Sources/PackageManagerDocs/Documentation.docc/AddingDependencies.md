@@ -1,17 +1,19 @@
 # Adding dependencies to a Swift package
 
-<!--@START_MENU_TOKEN@-->Summary<!--@END_MENU_TOKEN@-->
+Use other swift packages, system libraries, or binary dependencies in your package.
 
 ## Overview
 
-To depend on a package, define the dependency and the version in the manifest of
-your package, and add a product from that package as a dependency, e.g., if
-you want to use https://github.com/apple/example-package-playingcard as
-a dependency, add the GitHub URL in the dependencies of `Package.swift`:
+To depend on another Swift package, define the dependency and the requirements for its version in your package, then add a product of that package to one or more of your targets.
+An external dependency requires a location, represented by a URL, and a requirement on the versions that the package manager may use.
+The version requirement can be a commit hash, a branch name, a specific semantic version, or a range of possible semantic versions.
+A local dependency can be provided using [package(name:path:)](https://developer.apple.com/documentation/packagedescription/package/dependency/package(name:path:)) or [package(path:)](https://developer.apple.com/documentation/packagedescription/package/dependency/package(path:)) with a local path to another Swift package.
+See [Package.Dependency](https://developer.apple.com/documentation/packagedescription/package/dependency) for all the methods to specify a dependency.
 
-<!-- ref: https://developer.apple.com/documentation/xcode/creating-a-standalone-swift-package-with-xcode#Add-a-dependency-on-another-Swift-package -->
+The following example illustrates depending on the swift package https://github.com/apple/example-package-playingcard, and uses the library product `PlayingCard` as a dependency for the target `MyPackage`:
 
 ```swift
+// swift-tools-version:6.1
 import PackageDescription
 
 let package = Package(
@@ -32,17 +34,17 @@ let package = Package(
 )
 ```
 
+The package manager automatically resolves packages when you invoke <doc:SwiftRun> or <doc:SwiftBuild>.
+You can explicitly resolve the packages with the command <doc:PackageResolve>.
+
 ### Requiring System Libraries
 
-You can link against system libraries using the package manager. To do so, you'll
-need to add a special `target` of type `.systemLibrary`, and a `module.modulemap`
-for each system library you're using.
+You can link against system libraries using the package manager. 
+To do so, add a `target` of type [systemLibrary](https://developer.apple.com/documentation/packagedescription/target/systemlibrary(name:path:pkgconfig:providers:)), and a `module.modulemap` for each system library you're using.
 
-Let's see an example of adding [libgit2](https://github.com/libgit2/libgit2) as a
-dependency to an executable target.
+Let's see an example of adding [libgit2](https://github.com/libgit2/libgit2) as a dependency to an executable target.
 
-Create a directory called `example`, and initialize it as a package that
-builds an executable:
+Create a directory called `example`, and initialize it as a package that builds an executable:
 
     $ mkdir example
     $ cd example
@@ -57,16 +59,17 @@ let options = git_repository_init_options()
 print(options)
 ```
 
-To `import Clibgit`, the package manager requires that the libgit2 library has
-been installed by a system packager (eg. `apt`, `brew`, `yum`, `nuget`, etc.). The
-following files from the libgit2 system-package are of interest:
+To `import Clibgit`, the package manager requires that the libgit2 library has been installed by a system packager (eg. `apt`, `brew`, `yum`, `nuget`, etc.). 
+The following files from the libgit2 system-package are of interest:
 
     /usr/local/lib/libgit2.dylib      # .so on Linux
     /usr/local/include/git2.h
 
 **Note:** the system library may be located elsewhere on your system, such as:
+
 - `/usr/`, or `/opt/homebrew/` if you're using Homebrew on an Apple Silicon Mac.
 - `C:\vcpkg\installed\x64-windows\include` on Windows, if you're using `vcpkg`.
+
 On most Unix-like systems, you can use `pkg-config` to lookup where a library is installed:
 
     example$ pkg-config --cflags libgit2
@@ -99,22 +102,25 @@ let package = Package(
 
 ```
 
-**Note:** For Windows-only packages `pkgConfig` should be omitted as
-`pkg-config` is not expected to be available. If you don't want to use the
-`pkgConfig` parameter you can pass the path of a directory containing the
-library using the `-L` flag in the command line when building your package
-instead.
+> Note: For Windows-only packages `pkgConfig` should be omitted as
+  `pkg-config` is not expected to be available. If you don't want to use the
+  `pkgConfig` parameter you can pass the path of a directory containing the
+  library using the `-L` flag in the command line when building your package
+  instead.
 
-    example$ swift build -Xlinker -L/usr/local/lib/
+```bash
+% swift build -Xlinker -L/usr/local/lib/
+```
 
-Next, create a directory `Sources/Clibgit` in your `example` project, and
-add a `module.modulemap` and the header file to it:
+Next, create a directory `Sources/Clibgit` in your `example` project, and add a `module.modulemap` and the header file to it:
 
-    module Clibgit [system] {
-      header "git2.h"
-      link "git2"
-      export *
-    }
+```
+module Clibgit [system] {
+  header "git2.h"
+  link "git2"
+  export *
+}
+```
 
 The header file should look like this:
 
@@ -124,10 +130,10 @@ The header file should look like this:
 #include <git2.h>
 ```
 
-**Note:** Avoid specifying an absolute path  in the `module.modulemap` to `git2.h`
-header provided by the library. Doing so will break compatibility of 
-your project between machines that may use a different file system layout or
-install libraries to different paths.
+> Note: Avoid specifying an absolute path  in the `module.modulemap` to `git2.h`
+  header provided by the library. Doing so will break compatibility of 
+  your project between machines that may use a different file system layout or
+  install libraries to different paths.
 
 > The convention we hope the community will adopt is to prefix such modules
 > with `C` and to camelcase the modules as per Swift module name conventions.
@@ -148,7 +154,7 @@ At this point, your system library target is fully defined, and you can now use
 that target as a dependency in other targets in your `Package.swift`, like this:
 
 ```swift
-
+// swift-tools-version: 5.8
 import PackageDescription
 
 let package = Package(
@@ -181,11 +187,13 @@ let package = Package(
 Now if we type `swift build` in our example app directory we will create an
 executable:
 
-    example$ swift build
-    …
-    example$ .build/debug/example
-    git_repository_init_options(version: 0, flags: 0, mode: 0, workdir_path: nil, description: nil, template_path: nil, initial_head: nil, origin_url: nil)
-    example$
+```bash
+example$ swift build
+…
+example$ .build/debug/example
+git_repository_init_options(version: 0, flags: 0, mode: 0, workdir_path: nil, description: nil, template_path: nil, initial_head: nil, origin_url: nil)
+example$
+```
 
 ### Requiring a System Library Without `pkg-config`
 
@@ -195,9 +203,11 @@ from an executable, which has some caveats.
 Create a directory called `example`, and initialize it as a package that builds
 an executable:
 
-    $ mkdir example
-    $ cd example
-    example$ swift package init --type executable
+```bash
+$ mkdir example
+$ cd example
+example$ swift package init --type executable
+```
 
 Edit the `Sources/main.swift` so it consists of this code:
 
@@ -215,12 +225,14 @@ and you'll have to link it manually at build time.
 Just like in the previous example, run `mkdir Sources/CJPEG` and add the
 following `module.modulemap`:
 
-    module CJPEG [system] {
-        header "shim.h"
-        header "/usr/local/opt/jpeg/include/jpeglib.h"
-        link "jpeg"
-        export *
-    }
+```
+module CJPEG [system] {
+    header "shim.h"
+    header "/usr/local/opt/jpeg/include/jpeglib.h"
+    link "jpeg"
+    export *
+}
+```
 
 Create a `shim.h` file in the same directory and add `#include <stdio.h>` in
 it.
@@ -274,23 +286,25 @@ Some system packages provide multiple libraries (`.so` and `.dylib` files). In
 such cases you should add all the libraries to that Swift modulemap package’s
 `.modulemap` file:
 
-    module CFoo [system] {
-        header "/usr/local/include/foo/foo.h"
-        link "foo"
-        export *
-    }
+```
+module CFoo [system] {
+    header "/usr/local/include/foo/foo.h"
+    link "foo"
+    export *
+}
 
-    module CFooBar [system] {
-        header "/usr/include/foo/bar.h"
-        link "foobar"
-        export *
-    }
+module CFooBar [system] {
+    header "/usr/include/foo/bar.h"
+    link "foobar"
+    export *
+}
 
-    module CFooBaz [system] {
-        header "/usr/include/foo/baz.h"
-        link "foobaz"
-        export *
-    }
+module CFooBaz [system] {
+    header "/usr/include/foo/baz.h"
+    link "foobaz"
+    export *
+}
+```
 
 `foobar` and `foobaz` link to `foo`; we don’t need to specify this information
 in the module-map because the headers `foo/bar.h` and `foo/baz.h` both include
