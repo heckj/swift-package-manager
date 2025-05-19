@@ -10,7 +10,7 @@ The version requirement can be a commit hash, a branch name, a specific semantic
 A local dependency can be provided using [package(name:path:)](https://developer.apple.com/documentation/packagedescription/package/dependency/package(name:path:)) or [package(path:)](https://developer.apple.com/documentation/packagedescription/package/dependency/package(path:)) with a local path to another Swift package.
 See [Package.Dependency](https://developer.apple.com/documentation/packagedescription/package/dependency) for all the methods to specify a dependency.
 
-The following example illustrates depending on the swift package https://github.com/apple/example-package-playingcard, and uses the library product `PlayingCard` as a dependency for the target `MyPackage`:
+The following example illustrates a package that depends on [PlayingCard](https://github.com/apple/example-package-playingcard), and uses the product `PlayingCard` as a dependency for the target `MyPackage`:
 
 ```swift
 // swift-tools-version:6.1
