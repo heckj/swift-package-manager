@@ -1,28 +1,23 @@
 # Creating C language targets
 
-<!--@START_MENU_TOKEN@-->Summary<!--@END_MENU_TOKEN@-->
+Include C language code as a target in your Swift package.
 
 ## Overview
 
-C language targets are similar to Swift targets, except that the C language
-libraries should contain a directory named `include` to hold the public headers.
+C language targets are structured similarly to Swift targets, with the additional of a directory named `include` to hold public header files.
+If you use a directory other than `include` for public headers, declare it using the [publicHeadersPath parameter](https://developer.apple.com/documentation/packagedescription/target/publicheaderspath) on [target](https://developer.apple.com/documentation/packagedescription/target).
 
-To allow a Swift target to import a C language target, add a [target](PackageDescription.md#target) in the manifest file. Swift Package Manager will
-automatically generate a modulemap for each C language library target for these
-3 cases:
+Swift Package manager allows only one valid C language main file for executable targets. 
+For example, it is invalid to have `main.c` and `main.cpp` in the same target.
 
-* If `include/Foo/Foo.h` exists and `Foo` is the only directory under the
-  include directory, and the include directory contains no header files, then
-  `include/Foo/Foo.h` becomes the umbrella header.
+### Exposing C functions to Swift
 
-* If `include/Foo.h` exists and `include` contains no other subdirectory, then
-  `include/Foo.h` becomes the umbrella header.
+Swift Package Manager automatically generates a module map for each C language library target for these use cases:
 
-* Otherwise, the `include` directory becomes an umbrella directory, which means
-  that all headers under it will be included in the module.
+* If `include/Foo/Foo.h` exists, `Foo` is the only directory under the include directory, and the include directory contains no header files, then Swift package manager uses `include/Foo/Foo.h` as the umbrella header.
 
-In case of complicated `include` layouts or headers that are not compatible with
-modules, a custom `module.modulemap` can be provided in the `include` directory.
+* If `include/Foo.h` exists and `include` contains no other subdirectory, then Swift package manager uses `include/Foo.h` as the umbrella header for the module map.
 
-For executable targets, only one valid C language main file is allowed, e.g., it
-is invalid to have `main.c` and `main.cpp` in the same target.
+* Otherwise, Swift package manager uses the `include` directory as an umbrella directory; all headers under it are included in the module.
+
+In case of complicated `include` layouts or headers that are not compatible with modules, provide a `module.modulemap` in the `include` directory.

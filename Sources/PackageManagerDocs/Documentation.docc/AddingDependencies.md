@@ -59,6 +59,7 @@ For more information on creating a binary target, see [Creating a multiplatform 
 
 ## Topics
 
+- <doc:ResolvingPackageVersions>
 - <doc:ResolvingDependencyFailures>
 - <doc:AddingSystemLibraryDependency>
 - <doc:ExampleSystemLibraryPkgConfig>
