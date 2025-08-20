@@ -137,7 +137,7 @@ final class JSONDumper: DependenciesDumper {
                 "url": .string(package.manifest.packageLocation),
                 "version": .string(package.manifest.version?.description ?? "unspecified"),
                 "path": .string(package.path.pathString),
-                "traits": .string(package.enabledTraits?.joined(separator: ", ") ?? ""),
+                "traits": .array(package.enabledTraits?.map { .string($0) } ?? []),
                 "dependencies": .array(package.dependencies.compactMap { graph.packages[$0] }.map(convert)),
             ])
         }
